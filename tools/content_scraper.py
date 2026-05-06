@@ -21,6 +21,8 @@ from openai import OpenAI
 from dotenv import load_dotenv
 import pandas as pd
 from tabulate import tabulate
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
 
 load_dotenv()
 
@@ -164,6 +166,43 @@ def scrape_youtube(topic: str = None) -> list:
     return results
 
 
+def scrape_twitter(topic: str = None) -> list:
+    print("🐦  Scraping Twitter/X...")
+    results = []
+    actor = os.getenv("APIFY_TWITTER_ACTOR", "apidojo/tweet-scraper")
+    run_input = {
+        "searchTerms": [topic] if topic else KEYWORDS[:2],
+        "tweetLanguage": "en",
+        "maxItems": 15
+    }
+    try:
+        run = apify.actor(actor).call(run_input=run_input)
+        cutoff = datetime.now() - timedelta(days=DAYS_BACK)
+        for item in apify.dataset(run["defaultDatasetId"]).iterate_items():
+            post_date = _parse_date(item.get("createdAt"))
+            if post_date < cutoff:
+                continue
+            views    = item.get("viewCount") or 0
+            likes    = item.get("likeCount") or 0
+            comments = item.get("replyCount") or 0
+            er       = round((likes + comments) / views * 100, 2) if views else 0
+            results.append({
+                "platform": "Twitter", "format": "Tweet",
+                "hook_text": (item.get("text") or "")[:120],
+                "full_caption": item.get("text") or "",
+                "views": views, "likes": likes, "comments": comments,
+                "engagement_rate": er,
+                "post_date": post_date.strftime("%Y-%m-%d"),
+                "url": item.get("url", ""),
+                "transcript": "",
+                "viral_tag": _viral_tag(views, er),
+            })
+    except Exception as e:
+        print(f"  ❌  Twitter scrape error: {e}")
+    print(f"  ✅  Twitter: {len(results)} posts")
+    return results
+
+
 def scrape_google_news(topic: str = None) -> list:
     print("📰  Scraping Google News (Trending)...")
     results = []
@@ -299,7 +338,7 @@ def run(topic: str | None = None) -> str | None:
     print("\n🚀  Agent 01 — Content Scraper\n" + "─"*50)
     print(f"📅  Last {DAYS_BACK} days | Keywords/Topic: {topic or ', '.join(KEYWORDS)}\n")
 
-    posts = scrape_instagram(topic) + scrape_youtube(topic) + scrape_google_news(topic) + scrape_hacker_news(topic) + scrape_reddit(topic)
+    posts = scrape_instagram(topic) + scrape_youtube(topic) + scrape_twitter(topic) + scrape_google_news(topic) + scrape_hacker_news(topic) + scrape_reddit(topic)
 
     if not posts:
         print("\n❌  No posts collected. Check API keys and actor IDs.")

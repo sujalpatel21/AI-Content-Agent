@@ -574,7 +574,7 @@ Outputs: JSON Array of Hooks</pre>
               const posts = agent === 'scraper' ? data : data.validated_posts;
               let tableHtml = `<table class="result-table"><thead><tr><th>Platform</th><th>Format</th><th>Views</th><th>ER</th><th>Topic/Hook</th></tr></thead><tbody>`;
               (posts || []).forEach(p => {
-                  tableHtml += `<tr><td>${p.platform}</td><td>${p.format}</td><td>${(p.views || 0).toLocaleString()}</td><td>${p.engagement_rate}%</td><td><div style="max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${(p.hook_text||'').replace(/</g, '&lt;')}</div></td></tr>`;
+                  tableHtml += `<tr><td>${p.platform}</td><td>${p.format}</td><td>${(p.views || 0).toLocaleString()}</td><td>${p.engagement_rate}%</td><td><div style="max-width: 450px; white-space: normal; word-wrap: break-word;">${(p.hook_text||'').replace(/</g, '&lt;')}</div></td></tr>`;
               });
               tableHtml += `</tbody></table>`;
               body.innerHTML = tableHtml;

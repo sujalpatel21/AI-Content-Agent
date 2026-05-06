@@ -1,4 +1,4 @@
-apify-client==1.8.1
+apify-client==2.5.0
 openai==1.78.0
 google-generativeai==0.8.4
 python-dotenv==1.0.1

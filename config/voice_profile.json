@@ -2,10 +2,10 @@
   "_instructions": "Fill this in BEFORE running the voice writer. The more detail you give, the more accurate the output.",
 
   "creator_name": "Your Name",
-  "language_style": "Hinglish",
+  "language_style": "English",
 
   "vocabulary": {
-    "words_i_use_often": ["bhai", "seedha", "kaam ka", "suno", "literally", "ekdum"],
+    "words_i_use_often": ["bro", "straight up", "useful", "listen", "literally", "exactly"],
     "words_i_never_use": ["utilize", "leverage", "synergy", "furthermore"]
   },
 
@@ -19,15 +19,15 @@
     "beat_1": "Setup — what the viewer is missing or getting wrong",
     "beat_2": "Revelation — the insight or tool they need to know",
     "beat_3": "Proof — quick result or example",
-    "cta": "Comment trigger — e.g. 'X comment karo, main bhej dunga'"
+    "cta": "Comment trigger — e.g. 'Comment X, and I will send it'"
   },
 
-  "hinglish_pattern": "Mix naturally — Hindi for emotion, English for tech terms. Example: 'Yeh tool use karo, life easy ho jaayegi.'",
+  "language_pattern": "Speak naturally — use casual English for emotion and precise English for tech terms. Example: 'Use this tool, it makes life so much easier.'",
 
   "cta_examples": [
-    "Link chahiye toh 'TOOL' comment karo",
-    "Free guide chahiye? 'GUIDE' likho neeche",
-    "Aur tips chahiye? Follow karo abhi"
+    "Comment 'TOOL' if you want the link",
+    "Want the free guide? Type 'GUIDE' below",
+    "Want more tips? Drop a follow"
   ],
 
   "past_scripts": [
