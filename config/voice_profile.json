@@ -1,0 +1,40 @@
+{
+  "_instructions": "Fill this in BEFORE running the voice writer. The more detail you give, the more accurate the output.",
+
+  "creator_name": "Your Name",
+  "language_style": "Hinglish",
+
+  "vocabulary": {
+    "words_i_use_often": ["bhai", "seedha", "kaam ka", "suno", "literally", "ekdum"],
+    "words_i_never_use": ["utilize", "leverage", "synergy", "furthermore"]
+  },
+
+  "sentence_style": {
+    "length": "short and punchy — 1-2 lines per beat",
+    "energy": "excited but authoritative",
+    "formality": "casual, like talking to a friend"
+  },
+
+  "script_structure": {
+    "beat_1": "Setup — what the viewer is missing or getting wrong",
+    "beat_2": "Revelation — the insight or tool they need to know",
+    "beat_3": "Proof — quick result or example",
+    "cta": "Comment trigger — e.g. 'X comment karo, main bhej dunga'"
+  },
+
+  "hinglish_pattern": "Mix naturally — Hindi for emotion, English for tech terms. Example: 'Yeh tool use karo, life easy ho jaayegi.'",
+
+  "cta_examples": [
+    "Link chahiye toh 'TOOL' comment karo",
+    "Free guide chahiye? 'GUIDE' likho neeche",
+    "Aur tips chahiye? Follow karo abhi"
+  ],
+
+  "past_scripts": [
+    "PASTE YOUR SCRIPT 1 HERE",
+    "PASTE YOUR SCRIPT 2 HERE",
+    "PASTE YOUR SCRIPT 3 HERE"
+  ],
+
+  "notes": "Always keep scripts under 45 seconds when spoken at my pace. Never start a beat with 'So' or 'Now'."
+}

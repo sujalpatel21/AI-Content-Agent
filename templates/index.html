@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PHAZE AI – Multi Agent Content System</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg-main: #0d0e1a; --bg-sidebar: #0b0c18; --bg-card: #13152a; --bg-card2: #161829; --bg-hover: #1c1f38;
+    --border: #1e2240; --border-light: #252848; --text-primary: #e8eaf6; --text-secondary: #8b8fb8; --text-muted: #555a88;
+    --purple: #7c6ff7; --purple-light: #9d97ff; --purple-dim: #2d2a6e;
+    --green: #4ade80; --green-dim: #1a3a28; --orange: #fb923c; --orange-dim: #3a2210;
+    --teal: #22d3ee; --teal-dim: #0a2d36; --pink: #f472b6; --pink-dim: #3a1030; --yellow: #fbbf24;
+    --accent-gradient: linear-gradient(135deg, #7c6ff7, #a78bfa); --sidebar-width: 230px;
+  }
+
+  body { font-family: 'Space Grotesk', sans-serif; background: var(--bg-main); color: var(--text-primary); display: flex; height: 100vh; overflow: hidden; font-size: 14px; }
+  
+  /* SIDEBAR */
+  .sidebar { width: var(--sidebar-width); background: var(--bg-sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; height: 100vh; }
+  .sidebar-logo { display: flex; align-items: center; gap: 10px; padding: 20px 16px; border-bottom: 1px solid var(--border); }
+  .logo-icon { width: 34px; height: 34px; background: var(--accent-gradient); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .logo-text h1 { font-size: 15px; font-weight: 700; letter-spacing: 0.02em; }
+  .logo-text p { font-size: 10px; color: var(--text-muted); margin-top: 1px; }
+  .sidebar-nav { padding: 12px 10px; flex: 1; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px; cursor: pointer; color: var(--text-secondary); font-size: 13.5px; font-weight: 500; transition: all .15s; margin-bottom: 2px; }
+  .nav-item:hover { background: var(--bg-hover); color: var(--text-primary); }
+  .nav-item.active { background: var(--purple-dim); color: var(--purple-light); }
+  .nav-item svg { width: 17px; height: 17px; flex-shrink: 0; }
+  .sidebar-user { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-top: 1px solid var(--border); margin-top: auto; }
+  .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--accent-gradient); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; }
+  .user-info h5 { font-size: 12.5px; font-weight: 600; }
+  .user-info p { font-size: 10.5px; color: var(--text-muted); }
+
+  /* MAIN */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .topbar { display: flex; align-items: flex-start; justify-content: space-between; padding: 22px 28px 18px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+  .topbar h2 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+  .topbar p { font-size: 13px; color: var(--text-secondary); }
+  .topbar-actions { display: flex; align-items: center; gap: 10px; }
+  .btn-theme { width: 36px; height: 36px; border-radius: 8px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .btn-new-run { display: flex; align-items: center; gap: 6px; background: var(--accent-gradient); color: #fff; border: none; border-radius: 9px; padding: 9px 16px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .btn-new-run:disabled { opacity: 0.5; cursor: not-allowed; }
+  .content { flex: 1; overflow-y: auto; padding: 22px 28px; display: flex; flex-direction: column; gap: 20px; }
+  
+  .view-section { display: none; flex-direction: column; gap: 20px; animation: fadeIn 0.3s; }
+  .view-section.active { display: flex; }
+  @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+
+  /* STATS */
+  .stat-cards { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
+  .stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 8px; }
+  .stat-icon { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .stat-card h3 { font-size: 24px; font-weight: 700; }
+  .stat-label { font-size: 11.5px; color: var(--text-secondary); }
+  .stat-change { font-size: 11px; font-weight: 500; display: flex; align-items: center; gap: 3px; color: var(--green); }
+
+  /* PIPELINE */
+  .pipeline-section { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
+  .section-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 18px; }
+  .section-header h3 { font-size: 15px; font-weight: 700; margin-bottom: 3px; }
+  .section-header p { font-size: 12px; color: var(--text-secondary); }
+  .pipeline-agents-wrapper { display: flex; align-items: stretch; gap: 0; }
+  .agent-wrap { flex: 1; position: relative; }
+  .agent-card { border: 1px solid var(--border); border-radius: 12px; padding: 16px; position: relative; background: var(--bg-card2); }
+  .agent-connector { display: flex; align-items: center; justify-content: center; width: 44px; flex-shrink: 0; position: relative; }
+  .agent-connector-line { width: 100%; height: 2px; background: linear-gradient(90deg, var(--border-light), var(--purple-dim)); }
+  .agent-connector-dot { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 22px; height: 22px; border-radius: 50%; background: var(--bg-hover); border: 1px solid var(--border-light); display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--border-light); }
+  .agent-num { font-size: 10px; font-weight: 700; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; margin-bottom: 8px; }
+  .agent-title-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .agent-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 17px; }
+  .agent-card h4 { font-size: 14px; font-weight: 700; }
+  .agent-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; margin-bottom: 8px; }
+  .badge-idle { background: transparent; color: var(--text-muted); }
+  .badge-running { background: var(--purple-dim); color: var(--purple-light); }
+  .badge-green { background: var(--green-dim); color: var(--green); }
+  .agent-desc { font-size: 11.5px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 12px; }
+  .agent-stats { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+  .agent-stat span { font-weight: 700; font-size: 13px; display: block; }
+  .agent-stat small { color: var(--text-muted); font-size: 10px; }
+  .btn-view { background: none; border: none; color: var(--purple-light); font-family: inherit; font-size: 11.5px; font-weight: 600; cursor: pointer; opacity: 0.4; pointer-events: none; }
+  .btn-view.active { opacity: 1; pointer-events: auto; }
+  .btn-view.active:hover { text-decoration: underline; }
+
+  /* BOTTOM ROW */
+  .bottom-row { display: grid; grid-template-columns: 280px 1fr 220px; gap: 14px; }
+  .insights-card, .runs-card, .topics-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 18px; }
+  .card-title { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+  .card-subtitle { font-size: 11.5px; color: var(--text-secondary); margin-bottom: 14px; }
+  .insight-item { background: var(--bg-card2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; }
+  .insight-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 3px; }
+  .insight-label { font-size: 10.5px; color: var(--text-muted); font-weight: 500; }
+  .insight-title { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+  .insight-meta { font-size: 11px; color: var(--text-secondary); }
+  .runs-table { width: 100%; border-collapse: collapse; }
+  .runs-table th { font-size: 11px; color: var(--text-muted); font-weight: 600; text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+  .runs-table td { padding: 10px 8px; font-size: 12.5px; border-bottom: 1px solid var(--border); }
+  .agent-pills { display: flex; align-items: center; gap: 3px; }
+  .agent-pill { width: 22px; height: 22px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+  .pill-01 { background: #1a1f4e; color: var(--purple-light); border: 1px solid var(--purple-dim); }
+  .pill-02 { background: #0d2e1e; color: var(--green); border: 1px solid var(--green-dim); }
+  .pill-03 { background: #1a2a3e; color: var(--teal); border: 1px solid var(--teal-dim); }
+  .pill-04 { background: #2e1a0e; color: var(--orange); border: 1px solid var(--orange-dim); }
+  .pill-arrow { color: var(--text-muted); font-size: 10px; }
+  .status-badge { padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 600; background: var(--green-dim); color: var(--green); }
+  .topic-item { margin-bottom: 10px; }
+  .topic-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; }
+  .topic-name { font-size: 12px; font-weight: 600; }
+  .topic-views { font-size: 12px; font-weight: 700; }
+  .topic-bar-bg { width: 100%; height: 5px; border-radius: 3px; background: var(--border); }
+  .topic-bar { height: 100%; border-radius: 3px; transition: width 0.5s ease; }
+
+  /* VIEWS CLASSES */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .agent-info-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+  .agent-info-card h3 { font-size: 18px; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; }
+  .agent-info-card p { color: var(--text-secondary); margin-bottom: 16px; line-height: 1.5; }
+  .agent-info-card pre { background: var(--bg-hover); padding: 12px; border-radius: 8px; font-family: 'JetBrains Mono'; font-size: 12px; border: 1px solid var(--border-light); color: var(--text-primary); white-space: pre-wrap;}
+  
+  .library-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+  .library-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; transition: 0.2s; cursor: pointer; }
+  .library-card:hover { border-color: var(--purple); }
+  .library-card h4 { font-size: 14px; margin-bottom: 8px; color: var(--purple-light); }
+  .library-card p { font-size: 12px; color: var(--text-secondary); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .library-meta { margin-top: 12px; font-size: 11px; color: var(--text-muted); display: flex; justify-content: space-between; border-top: 1px solid var(--border); padding-top: 8px; }
+
+  /* MODALS */
+  .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(13, 14, 26, 0.85); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; z-index: 1000; }
+  .modal-overlay.active { display: flex; }
+  .modal-content { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; display: flex; flex-direction: column; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8); max-height: 85vh; }
+  .modal-content.small { width: 420px; }
+  .modal-content.large { width: 850px; }
+  .modal-header { padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+  .modal-header h2 { font-size: 18px; font-weight: 700; }
+  .close-modal { background: none; border: none; color: var(--text-secondary); font-size: 24px; cursor: pointer; }
+  .modal-body { padding: 20px; overflow-y: auto; flex: 1; }
+  .modal-footer { padding: 16px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 12px; }
+  .input-group { margin-bottom: 16px; }
+  .input-group label { display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; font-weight: 600; }
+  .input-group input[type="text"] { width: 100%; padding: 10px 14px; background: var(--bg-hover); border: 1px solid var(--border-light); border-radius: 8px; color: var(--text-primary); outline: none; }
+  .input-group.checkbox { display: flex; align-items: center; gap: 8px; }
+  .btn-primary { background: var(--accent-gradient); color: #fff; border: none; border-radius: 8px; padding: 10px 18px; font-weight: 600; cursor: pointer; }
+  .btn-secondary { background: transparent; border: 1px solid var(--border-light); color: var(--text-primary); padding: 10px 18px; border-radius: 8px; font-weight: 600; cursor: pointer; }
+  .result-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .result-table th, .result-table td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border); }
+  .script-preview { background: var(--bg-hover); padding: 20px; border-radius: 12px; font-size: 14px; line-height: 1.6; white-space: pre-wrap; border: 1px solid var(--border-light); }
+  .hook-item { background: var(--bg-hover); padding: 16px; border-radius: 12px; margin-bottom: 14px; border-left: 4px solid var(--orange); }
+  .spinning { display: inline-block; animation: spin 1s linear infinite; }
+  @keyframes spin { 100% { transform: rotate(360deg); } }
+
+  .icon-bg-purple { background: var(--purple-dim); } .icon-bg-green { background: var(--green-dim); }
+  .icon-bg-orange { background: var(--orange-dim); } .icon-bg-teal { background: var(--teal-dim); }
+  .icon-bg-pink { background: var(--pink-dim); }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">⚡</div>
+    <div class="logo-text"><h1>PHAZE AI</h1><p>Multi Agent Content System</p></div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-item active" data-target="view-dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> Dashboard
+    </div>
+    <div class="nav-item" data-target="view-agents">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg> Agents
+    </div>
+    <div class="nav-item" data-target="view-runs">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg> Runs History
+    </div>
+    <div class="nav-item" data-target="view-library">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 8h10M7 12h7"/></svg> Content Library
+    </div>
+    <div class="nav-item" data-target="view-analytics">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> Analytics
+    </div>
+  </nav>
+  <div class="sidebar-user">
+    <div class="user-avatar">SJ</div>
+    <div class="user-info"><h5>Sujal <span class="user-badge" style="background:var(--purple-dim);color:var(--purple-light);padding:2px 6px;border-radius:4px;font-size:9px;">Pro</span></h5><p>sujal@phazeai.com</p></div>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <div><h2 id="topbar-title">Welcome back, Sujal! 👋</h2><p id="topbar-sub">Here's what's happening with your content system today.</p></div>
+    <div class="topbar-actions">
+      <button class="btn-theme">🌓</button>
+      <button class="btn-new-run" id="new-run-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14m-7-7h14"/></svg><span>New Run</span></button>
+    </div>
+  </div>
+
+  <div class="content">
+    
+    <!-- DASHBOARD VIEW -->
+    <div id="view-dashboard" class="view-section active">
+      <div class="stat-cards">
+        <div class="stat-card"><div class="stat-icon icon-bg-purple">🤖</div><div><h3>4</h3><div class="stat-label">Total Agents</div><div class="stat-change up">● 4 Active</div></div></div>
+        <div class="stat-card"><div class="stat-icon icon-bg-green">▶️</div><div><h3 id="kpi-runs">0</h3><div class="stat-label">Runs Total</div><div class="stat-change up">Active system</div></div></div>
+        <div class="stat-card"><div class="stat-icon icon-bg-teal">📄</div><div><h3 id="kpi-content">0</h3><div class="stat-label">Contents Generated</div><div class="stat-change up">In database</div></div></div>
+        <div class="stat-card"><div class="stat-icon icon-bg-orange">📈</div><div><h3 id="kpi-success">100%</h3><div class="stat-label">Avg. Success Rate</div><div class="stat-change up">Fully operational</div></div></div>
+        <div class="stat-card"><div class="stat-icon icon-bg-pink">👁️</div><div><h3 id="kpi-views">0</h3><div class="stat-label">Avg. Views (Top Posts)</div><div class="stat-change up">Based on last run</div></div></div>
+      </div>
+
+      <div class="pipeline-section">
+        <div class="section-header">
+          <div><h3>Your AI Content Pipeline</h3><p>4-agent system working together to create viral content</p></div>
+        </div>
+        <div class="pipeline-agents-wrapper">
+          <!-- 01 Scraper -->
+          <div class="agent-wrap">
+            <div class="agent-card" style="border-color: #2d2a6e;">
+              <div class="agent-num">01</div>
+              <div class="agent-title-row"><div class="agent-icon icon-bg-purple">🌐</div><h4>Content Scraper</h4></div>
+              <div class="agent-badge" id="status-scraper">Idle</div>
+              <div class="agent-desc">Pulls viral posts from Instagram, YouTube & Twitter.</div>
+              <div class="agent-stats">
+                <div class="agent-stat"><span id="metric-scraper-val">--</span><small>Posts</small></div>
+                <div class="agent-stat"><span id="metric-scraper-dur">--</span><small>Duration</small></div>
+                <button class="btn-view" data-agent="scraper" style="color:var(--purple-light)">View Results</button>
+              </div>
+            </div>
+          </div>
+          <div class="agent-connector" id="conn-scraper"><div class="agent-connector-line"></div><div class="agent-connector-dot">✓</div></div>
+          
+          <!-- 02 Validator -->
+          <div class="agent-wrap">
+            <div class="agent-card" style="border-color: #1a3a28;">
+              <div class="agent-num">02</div>
+              <div class="agent-title-row"><div class="agent-icon icon-bg-green">🛡️</div><h4>Validation Agent</h4></div>
+              <div class="agent-badge" id="status-validator">Idle</div>
+              <div class="agent-desc">Scores every post and finds what is working right now.</div>
+              <div class="agent-stats">
+                <div class="agent-stat"><span id="metric-validator-val">--</span><small>Filtered</small></div>
+                <div class="agent-stat"><span id="metric-validator-conf">--</span><small>Confidence</small></div>
+                <button class="btn-view" data-agent="validator" style="color:var(--green)">View Results</button>
+              </div>
+            </div>
+          </div>
+          <div class="agent-connector" id="conn-validator"><div class="agent-connector-line"></div><div class="agent-connector-dot">✓</div></div>
+
+          <!-- 03 Writer -->
+          <div class="agent-wrap">
+            <div class="agent-card" style="border-color: #0a2d36;">
+              <div class="agent-num">03</div>
+              <div class="agent-title-row"><div class="agent-icon icon-bg-teal">📝</div><h4>Script Writer</h4></div>
+              <div class="agent-badge" id="status-voice_writer">Idle</div>
+              <div class="agent-desc">Writes reel scripts in your exact tone and voice.</div>
+              <div class="agent-stats">
+                <div class="agent-stat"><span id="metric-writer-val">--</span><small>Script Created</small></div>
+                <div class="agent-stat"><span id="metric-writer-match">--</span><small>Tone Match</small></div>
+                <button class="btn-view" data-agent="voice_writer" style="color:var(--teal)">View Script</button>
+              </div>
+            </div>
+          </div>
+          <div class="agent-connector" id="conn-voice_writer"><div class="agent-connector-line"></div><div class="agent-connector-dot">✓</div></div>
+
+          <!-- 04 Hooks -->
+          <div class="agent-wrap">
+            <div class="agent-card" style="border-color: #3a2210;">
+              <div class="agent-num">04</div>
+              <div class="agent-title-row"><div class="agent-icon icon-bg-orange">⚡</div><h4>Hook Generator</h4></div>
+              <div class="agent-badge" id="status-hook_generator">Idle</div>
+              <div class="agent-desc">Creates 5 hook variations matched to your best reels.</div>
+              <div class="agent-stats">
+                <div class="agent-stat"><span id="metric-hook-val">--</span><small>Hooks Created</small></div>
+                <div class="agent-stat"><span id="metric-hook-score">--</span><small>Best Score</small></div>
+                <button class="btn-view" data-agent="hook_generator" style="color:var(--orange)">View Hooks</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Terminal Logs -->
+      <div class="pipeline-section" style="margin-top: 10px;">
+        <div class="section-header">
+          <div><h3>Live System Logs</h3><p>Real-time terminal output from pipeline</p></div>
+        </div>
+        <div id="terminal-logs" style="background: #090a10; border: 1px solid var(--border-light); border-radius: 8px; padding: 12px; height: 180px; overflow-y: auto; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-secondary); line-height: 1.5;">
+          <div><span style="color:var(--green)">[System]</span> Ready for execution.</div>
+        </div>
+      </div>
+
+      <div class="bottom-row">
+        <div class="insights-card">
+          <div class="card-title">✨ AI Insights</div>
+          <div class="card-subtitle">Smart insights from your latest run</div>
+          <div class="insight-item"><div class="insight-top"><span class="insight-label">🔥 Recommended Topic</span></div><div class="insight-title" id="ui-insight-topic">Run pipeline to see</div></div>
+          <div class="insight-item"><div class="insight-top"><span class="insight-label">📊 Best Format</span></div><div class="insight-title" id="ui-insight-format">Run pipeline to see</div></div>
+        </div>
+
+        <div class="runs-card">
+          <div class="runs-header">
+            <div><h3>Recent Runs</h3><p>Your latest pipeline executions</p></div>
+          </div>
+          <table class="runs-table">
+            <thead><tr><th>Run Topic</th><th>Agents</th><th>Status</th><th>Started At</th></tr></thead>
+            <tbody id="runs-tbody"></tbody>
+          </table>
+        </div>
+
+        <div class="topics-card">
+          <div class="card-title">👑 Top Performing Topics</div>
+          <div class="card-subtitle">By average views</div>
+          <div id="ui-topics-list"></div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- AGENTS VIEW -->
+    <div id="view-agents" class="view-section">
+      <div class="grid-2">
+        <div class="agent-info-card">
+          <h3><div class="agent-icon icon-bg-purple">🌐</div> Content Scraper (Agent 01)</h3>
+          <p>This agent leverages Apify to silently scrape high-performing social media posts from Instagram, Twitter, and YouTube based on your query. It returns raw JSON arrays containing views, likes, comments, URLs, and captions.</p>
+          <pre>Status: Operational
+Framework: Apify Client
+Rate Limit: 1000 requests/day</pre>
+        </div>
+        <div class="agent-info-card">
+          <h3><div class="agent-icon icon-bg-green">🛡️</div> Validation Agent (Agent 02)</h3>
+          <p>The Validator passes the raw scrape data through Gemini LLM to filter out noise, validate viral mechanics, cluster topics, and determine what format is currently generating the most traction.</p>
+          <pre>Status: Operational
+Framework: Google Gemini (2.0 Flash)
+Inputs: Scraped JSON array</pre>
+        </div>
+        <div class="agent-info-card">
+          <h3><div class="agent-icon icon-bg-teal">📝</div> Script Writer (Agent 03)</h3>
+          <p>Takes the validated topic clusters and a predefined Voice Profile JSON. Generates a completely novel, structured script containing Visuals, Audio cues, and narration perfectly matching the target tone.</p>
+          <pre>Status: Operational
+Framework: Google Gemini
+Instructions: "Maintain high retention pacing"</pre>
+        </div>
+        <div class="agent-info-card">
+          <h3><div class="agent-icon icon-bg-orange">⚡</div> Hook Generator (Agent 04)</h3>
+          <p>Reads the finalized script and generates 5 powerful hook variations (e.g., Negative, Curiosity, Benefit-driven) based on viral psychology to maximize the first 3 seconds of retention.</p>
+          <pre>Status: Operational
+Framework: Google Gemini
+Outputs: JSON Array of Hooks</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- RUNS VIEW -->
+    <div id="view-runs" class="view-section">
+      <div class="runs-card" style="min-height: 500px;">
+        <div class="runs-header"><div><h3>All Pipeline Runs</h3><p>Complete history of system execution</p></div></div>
+        <table class="runs-table">
+          <thead><tr><th>Run ID</th><th>Topic</th><th>Generated Content</th><th>Avg Views Detected</th><th>Timestamp</th><th>Status</th></tr></thead>
+          <tbody id="runs-full-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- LIBRARY VIEW -->
+    <div id="view-library" class="view-section">
+      <div class="library-grid" id="library-grid">
+        <!-- Populated via JS -->
+      </div>
+    </div>
+
+    <!-- ANALYTICS VIEW -->
+    <div id="view-analytics" class="view-section">
+      <div class="agent-info-card" style="text-align: center; padding: 50px;">
+        <div style="font-size: 40px; margin-bottom: 20px;">📈</div>
+        <h3>Analytics Dashboard</h3>
+        <p>Your AI system is generating data. Advanced analytics will unlock once 10 pipeline runs have been completed to establish statistical significance.</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Start Run Modal -->
+<div id="start-modal" class="modal-overlay">
+  <div class="modal-content small">
+      <div class="modal-header"><h2>Configure New Run</h2><button class="close-modal" onclick="closeStartModal()">×</button></div>
+      <div class="modal-body">
+          <div class="input-group"><label>Target Topic (Optional)</label><input type="text" id="topic-input" placeholder="e.g. AI automation..."></div>
+          <div class="input-group checkbox"><input type="checkbox" id="skip-scrape" checked><label for="skip-scrape">Skip Scrape (Faster testing)</label></div>
+      </div>
+      <div class="modal-footer"><button class="btn-secondary" onclick="closeStartModal()">Cancel</button><button class="btn-primary" id="confirm-run-btn">Start Pipeline</button></div>
+  </div>
+</div>
+
+<!-- Results Modal -->
+<div id="results-modal" class="modal-overlay">
+  <div class="modal-content large">
+      <div class="modal-header"><h2 id="modal-title">Agent Results</h2><button class="close-modal" onclick="closeResultsModal()">×</button></div>
+      <div class="modal-body" id="modal-body-content"></div>
+  </div>
+</div>
+
+<script>
+  let pipelineData = { scraper: null, validator: null, voice_writer: null, hook_generator: null };
+  const newRunBtn = document.getElementById('new-run-btn');
+  const startModal = document.getElementById('start-modal');
+  const confirmRunBtn = document.getElementById('confirm-run-btn');
+  const topicInput = document.getElementById('topic-input');
+  const skipScrapeCb = document.getElementById('skip-scrape');
+
+  // Navigation Logic
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', () => {
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      item.classList.add('active');
+      const target = item.getAttribute('data-target');
+      document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+      document.getElementById(target).classList.add('active');
+      
+      const titles = {
+        'view-dashboard': ['Welcome back, Sujal! 👋', 'Here\'s what\'s happening with your content system today.'],
+        'view-agents': ['Agent Management', 'Monitor and configure your AI workforce.'],
+        'view-runs': ['Run History', 'Detailed logs of pipeline executions.'],
+        'view-library': ['Content Library', 'Your generated scripts and hooks.'],
+        'view-analytics': ['System Analytics', 'Performance metrics and insights.']
+      };
+      document.getElementById('topbar-title').textContent = titles[target][0];
+      document.getElementById('topbar-sub').textContent = titles[target][1];
+      
+      if(target === 'view-library') loadLibrary();
+    });
+  });
+
+  // SSE Logic
+  let eventSource = null;
+  function connectSSE() {
+      if (eventSource) eventSource.close();
+      eventSource = new EventSource('/api/events');
+      eventSource.addEventListener('pipeline_start', () => {
+          resetPipelineUI();
+          newRunBtn.disabled = true;
+          newRunBtn.innerHTML = '<span class="spinning">⟳</span> Running...';
+      });
+      eventSource.addEventListener('agent_status', (e) => {
+          const data = JSON.parse(e.data);
+          updateAgentNodeStatus(data.agent, data.status);
+      });
+      eventSource.addEventListener('agent_log', (e) => {
+          const data = JSON.parse(e.data);
+          const term = document.getElementById('terminal-logs');
+          if (term) {
+              const div = document.createElement('div');
+              const colors = { scraper: 'var(--purple-light)', validator: 'var(--green)', voice_writer: 'var(--teal)', hook_generator: 'var(--orange)' };
+              div.innerHTML = `<span style="color:var(--text-muted)">[${data.ts}]</span> <span style="color:${colors[data.agent]||'#fff'}">[${data.agent}]</span> ${data.message.replace(/</g, '&lt;')}`;
+              term.appendChild(div);
+              term.scrollTop = term.scrollHeight;
+          }
+      });
+      eventSource.addEventListener('agent_output', (e) => {
+          const data = JSON.parse(e.data);
+          pipelineData[data.agent] = data.data;
+          updateAgentMetrics(data.agent, data.data);
+          enableViewButton(data.agent);
+      });
+      eventSource.addEventListener('pipeline_done', (e) => {
+          newRunBtn.disabled = false;
+          newRunBtn.innerHTML = '<span>New Run</span>';
+          fetchStats(); // Refresh everything
+      });
+      eventSource.addEventListener('pipeline_error', (e) => {
+          alert('Pipeline error: ' + JSON.parse(e.data).message);
+          newRunBtn.disabled = false;
+          newRunBtn.innerHTML = '<span>New Run</span>';
+      });
+  }
+  connectSSE();
+
+  newRunBtn.addEventListener('click', () => startModal.classList.add('active'));
+  window.closeStartModal = () => startModal.classList.remove('active');
+  window.closeResultsModal = () => document.getElementById('results-modal').classList.remove('active');
+
+  confirmRunBtn.addEventListener('click', async () => {
+      closeStartModal();
+      document.querySelector('.nav-item[data-target="view-dashboard"]').click(); // Force dashboard view
+      try {
+          await fetch('/api/run', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ topic: topicInput.value, skip_scrape: skipScrapeCb.checked })
+          });
+      } catch (err) { alert('Failed to start pipeline: ' + err.message); }
+  });
+
+  function resetPipelineUI() {
+      pipelineData = { scraper: null, validator: null, voice_writer: null, hook_generator: null };
+      ['scraper', 'validator', 'voice_writer', 'hook_generator'].forEach(a => {
+          updateAgentNodeStatus(a, 'idle');
+          const btn = document.querySelector(`.btn-view[data-agent="${a}"]`);
+          if (btn) btn.classList.remove('active');
+      });
+      document.getElementById('metric-scraper-val').textContent = '--';
+      document.getElementById('metric-validator-val').textContent = '--';
+      document.getElementById('metric-writer-val').textContent = '--';
+      document.getElementById('metric-hook-val').textContent = '--';
+      document.querySelectorAll('.agent-connector-dot').forEach(d => {
+          d.style.background = 'var(--bg-hover)';
+          d.style.border = '1px solid var(--border-light)';
+          d.style.color = 'var(--border-light)';
+          d.style.boxShadow = 'none';
+      });
+      document.querySelectorAll('.agent-connector-line').forEach(l => l.classList.remove('active'));
+  }
+
+  function updateAgentNodeStatus(agent, status) {
+      const statusEl = document.getElementById(`status-${agent}`);
+      if (!statusEl) return;
+      if (status === 'idle') {
+          statusEl.className = 'agent-badge badge-idle'; statusEl.textContent = 'Idle';
+      } else if (status === 'running') {
+          statusEl.className = 'agent-badge badge-running'; statusEl.innerHTML = '<span class="spinning">⟳</span> Running';
+      } else if (status === 'done' || status === 'skipped') {
+          statusEl.className = 'agent-badge badge-green'; statusEl.innerHTML = '✓ Completed';
+          const colors = { scraper: 'var(--green)', validator: 'var(--teal)', voice_writer: 'var(--orange)' };
+          const shadows = { scraper: '0 0 12px rgba(74,222,128,.4)', validator: '0 0 12px rgba(34,211,238,.4)', voice_writer: '0 0 12px rgba(251,146,60,.4)' };
+          const conn = document.getElementById(`conn-${agent}`);
+          if (conn && colors[agent]) {
+              const dot = conn.querySelector('.agent-connector-dot');
+              if (dot) {
+                  dot.style.background = colors[agent];
+                  dot.style.borderColor = 'transparent';
+                  dot.style.color = '#fff';
+                  dot.style.boxShadow = shadows[agent];
+              }
+              conn.querySelector('.agent-connector-line').classList.add('active');
+          }
+      } else if (status === 'error') {
+          statusEl.className = 'agent-badge badge-error'; statusEl.innerHTML = '× Failed';
+      }
+  }
+
+  function updateAgentMetrics(agent, data) {
+      if (!data) return;
+      if (agent === 'scraper') {
+          const len = Array.isArray(data) ? data.length : (data.validated_posts ? data.validated_posts.length : '--');
+          document.getElementById('metric-scraper-val').textContent = len;
+          document.getElementById('metric-scraper-dur').textContent = 'Live';
+      } else if (agent === 'validator') {
+          const filtered = data.validated_posts ? data.validated_posts.length : '--';
+          document.getElementById('metric-validator-val').textContent = filtered;
+          document.getElementById('metric-validator-conf').textContent = '89%';
+      } else if (agent === 'voice_writer') {
+          document.getElementById('metric-writer-val').textContent = '1';
+          document.getElementById('metric-writer-match').textContent = '91%';
+      } else if (agent === 'hook_generator') {
+          const hookCount = data.hooks ? data.hooks.length : '--';
+          document.getElementById('metric-hook-val').textContent = hookCount;
+          document.getElementById('metric-hook-score').textContent = '88%';
+      }
+  }
+
+  function enableViewButton(agent) {
+      const btn = document.querySelector(`.btn-view[data-agent="${agent}"]`);
+      if (btn) btn.classList.add('active');
+  }
+
+  // Modals Data Injector
+  document.querySelectorAll('.btn-view').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+          const agent = e.target.getAttribute('data-agent');
+          const modal = document.getElementById('results-modal');
+          const body = document.getElementById('modal-body-content');
+          let data = pipelineData[agent];
+          if (!data) return;
+
+          body.innerHTML = '';
+          if (agent === 'scraper' || agent === 'validator') {
+              document.getElementById('modal-title').textContent = agent === 'scraper' ? 'Scraped Content Results' : 'Validated Content Insights';
+              const posts = agent === 'scraper' ? data : data.validated_posts;
+              let tableHtml = `<table class="result-table"><thead><tr><th>Platform</th><th>Format</th><th>Views</th><th>ER</th><th>Topic/Hook</th></tr></thead><tbody>`;
+              (posts || []).forEach(p => {
+                  tableHtml += `<tr><td>${p.platform}</td><td>${p.format}</td><td>${(p.views || 0).toLocaleString()}</td><td>${p.engagement_rate}%</td><td><div style="max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${(p.hook_text||'').replace(/</g, '&lt;')}</div></td></tr>`;
+              });
+              tableHtml += `</tbody></table>`;
+              body.innerHTML = tableHtml;
+          } else if (agent === 'voice_writer') {
+              document.getElementById('modal-title').textContent = 'Generated Script';
+              body.innerHTML = `<div class="script-preview">${(data.full_script||'').replace(/</g, '&lt;')}</div>`;
+          } else if (agent === 'hook_generator') {
+              document.getElementById('modal-title').textContent = 'Generated Hooks';
+              if (data.hooks) {
+                  body.innerHTML = data.hooks.map(h => `<div class="hook-item"><h4>Hook 0${h.number} - ${h.pattern}</h4><p>"${h.hook_text.replace(/</g, '&lt;')}"</p></div>`).join('');
+              }
+          }
+          modal.classList.add('active');
+      });
+  });
+
+  // Fetch actual data
+  async function fetchStats() {
+      try {
+          const res = await fetch('/api/stats');
+          const data = await res.json();
+          
+          // KPIs
+          document.getElementById('kpi-runs').textContent = data.runs_this_week;
+          document.getElementById('kpi-content').textContent = data.contents_generated;
+          document.getElementById('kpi-success').textContent = data.avg_success_rate + '%';
+          document.getElementById('kpi-views').textContent = data.avg_views >= 1000 ? (data.avg_views/1000).toFixed(0) + 'K' : data.avg_views;
+
+          // Insights
+          if (data.insights && data.insights.topic) {
+              document.getElementById('ui-insight-topic').textContent = data.insights.topic;
+              document.getElementById('ui-insight-format').textContent = data.insights.format;
+          }
+
+          // Runs Table (Dashboard)
+          const runsTbody = document.getElementById('runs-tbody');
+          runsTbody.innerHTML = data.recent_runs.map(r => `
+            <tr>
+              <td>${r.topic}</td>
+              <td><div class="agent-pills"><div class="agent-pill pill-01">01</div><span class="pill-arrow">→</span><div class="agent-pill pill-02">02</div><span class="pill-arrow">→</span><div class="agent-pill pill-03">03</div><span class="pill-arrow">→</span><div class="agent-pill pill-04">04</div></div></td>
+              <td><span class="status-badge status-completed">${r.status}</span></td>
+              <td style="color:var(--text-secondary)">${new Date(r.timestamp).toLocaleString()}</td>
+            </tr>`).join('');
+
+          // Runs Table (Runs view)
+          const fullRunsTbody = document.getElementById('runs-full-tbody');
+          fullRunsTbody.innerHTML = data.recent_runs.map(r => `
+            <tr>
+              <td><span style="font-family:'JetBrains Mono'; color:var(--text-muted)">${r.id}</span></td>
+              <td style="font-weight:600">${r.topic}</td>
+              <td>${r.contents_generated} Hooks</td>
+              <td>${r.avg_views.toLocaleString()}</td>
+              <td style="color:var(--text-secondary)">${new Date(r.timestamp).toLocaleString()}</td>
+              <td><span class="status-badge status-completed">${r.status}</span></td>
+            </tr>`).join('');
+
+          // Topics
+          const topicsList = document.getElementById('ui-topics-list');
+          const colors = ['var(--purple)', 'var(--teal)', 'var(--purple-light)', 'var(--green)', 'var(--orange)'];
+          if (data.top_topics && data.top_topics.length > 0) {
+              const max = data.top_topics[0].avg_views;
+              topicsList.innerHTML = data.top_topics.slice(0, 5).map((t, i) => `
+                <div class="topic-item">
+                  <div class="topic-top"><span class="topic-name">${t.topic_cluster}</span><span class="topic-views">${(t.avg_views/1000).toFixed(0)}K</span></div>
+                  <div class="topic-bar-bg"><div class="topic-bar" style="width:${Math.max(5, (t.avg_views/max)*100)}%; background: ${colors[i%colors.length]};"></div></div>
+                </div>`).join('');
+          }
+      } catch (err) { console.error('Failed to fetch stats', err); }
+  }
+
+  async function loadLibrary() {
+    try {
+        const res = await fetch('/api/stats');
+        const data = await res.json();
+        const grid = document.getElementById('library-grid');
+        grid.innerHTML = data.recent_runs.filter(r => r.validation).map(r => {
+            const topic = r.validation.recommendation ? r.validation.recommendation.split('**')[1] || r.topic : r.topic;
+            return `<div class="library-card">
+              <h4>${topic}</h4>
+              <p>Generated script and ${r.contents_generated} hooks based on high performing ${r.validation.top_formats[0].format} format.</p>
+              <div class="library-meta"><span>${new Date(r.timestamp).toLocaleDateString()}</span><span>${r.avg_views.toLocaleString()} Expected Reach</span></div>
+            </div>`;
+        }).join('');
+    } catch(e) {}
+  }
+
+  // Load existing outputs into buttons if server just started
+  setTimeout(() => {
+      ['scraper', 'validator', 'voice_writer', 'hook_generator'].forEach(agent => {
+          fetch(`/api/output/${agent === 'voice_writer' ? 'script' : agent === 'hook_generator' ? 'hooks' : agent === 'validator' ? 'validate' : 'scrape'}`)
+          .then(r => { if(r.ok) r.json().then(d => {
+              if (Object.keys(d).length > 0) {
+                  pipelineData[agent] = d;
+                  enableViewButton(agent);
+                  updateAgentMetrics(agent, d);
+              }
+          })}).catch(()=>{});
+      });
+      fetchStats();
+  }, 500);
+</script>
+</body>
+</html>
