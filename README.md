@@ -1,19 +1,20 @@
 # AI Content System
 
-A 4-agent AI pipeline built on the **WAT framework** (Workflows → Agents → Tools).  
-Scrapes viral content → validates what's working → writes your script → generates hooks.  
-Total daily run time: **~3 minutes**.
+A 5-agent AI pipeline built on the **WAT framework** (Workflows → Agents → Tools).  
+Detects real-time trends → validates what's working → writes your script → generates hooks — plus an on-demand agent that turns a link/image/video into a platform-ready draft for Benji (the WhatsApp/Telegram assistant) to hand back to you.  
+Total daily run time: **~3 minutes** for the trend pipeline; the post generator runs per-request.
 
 ---
 
-## The 4 Agents
+## The 5 Agents
 
 | Agent | Tool | What it does |
 |-------|------|-------------|
-| **01 — Content Scraper** | `tools/content_scraper.py` | Pulls viral posts from Instagram, YouTube & Twitter via Apify. Transcribes top videos with Whisper. |
+| **01 — Content Scraper** | `tools/content_scraper.py` | Pulls real-time trends from Google Trends, Reddit, Google News & Hacker News — all free RSS/public feeds, no paid API, no competitor-profile scraping. |
 | **02 — Validation Agent** | `tools/content_validator.py` | Scores posts (views 40%, ER 35%, comments 25%), filters low performers, clusters by topic, ranks what's working. |
-| **03 — Voice Writer** | `tools/voice_writer.py` | Writes your reel script in your exact tone using Claude. Beat 1 → Beat 2 → Beat 3 → CTA. |
+| **03 — Voice Writer** | `tools/voice_writer.py` | Writes your reel script in your exact tone using OpenAI. Beat 1 → Beat 2 → Beat 3 → CTA. |
 | **04 — Hook Generator** | `tools/hook_generator.py` | Generates 5 hook variations (aspirational, pain point, insider, claim, curiosity) with confidence scores. |
+| **05 — Post Generator** | `tools/post_generator.py` | On-demand: takes a link/image/video/text + target platform, returns a draft post in your voice. Exposed via `/api/generate-post` for Benji to call. Never publishes on its own. |
 
 ---
 
@@ -26,10 +27,10 @@ pip install -r tools/requirements.txt
 
 ### Step 2 — Fill in `.env`
 Open `.env` and add:
-- `APIFY_API_KEY` → [console.apify.com](https://console.apify.com/account/integrations)
 - `OPENAI_API_KEY` → [platform.openai.com/api-keys](https://platform.openai.com/api-keys)
 - `ANTHROPIC_API_KEY` → [console.anthropic.com](https://console.anthropic.com/)
-- Your competitor handles for Instagram, YouTube, Twitter
+- `CONTENT_KEYWORDS` → comma-separated topics to search Reddit/Google News for when no topic is passed in
+- Agent 01 (trend scraping) needs no API key — it's all free/public feeds
 
 ### Step 3 — Fill in your voice profile
 Edit `config/voice_profile.json`:
@@ -102,9 +103,11 @@ AI Content System/
 
 | Variable | Where to get it | Used by |
 |----------|----------------|---------|
-| `APIFY_API_KEY` | [console.apify.com](https://console.apify.com/account/integrations) | Agent 01 (scraping) |
-| `OPENAI_API_KEY` | [platform.openai.com](https://platform.openai.com/api-keys) | Agent 01 (Whisper transcription) |
-| `ANTHROPIC_API_KEY` | [console.anthropic.com](https://console.anthropic.com/) | Agent 03 & 04 (script + hooks) |
+| `OPENAI_API_KEY` | [platform.openai.com](https://platform.openai.com/api-keys) | Agent 03 & 04 (script + hooks) |
+
+Agent 01 (trend scraper) needs no credentials — every source it hits is a free/public feed.
+
+Note: despite older references elsewhere to Gemini/Anthropic keys for these agents, the actual code in `voice_writer.py` and `hook_generator.py` calls OpenAI — `OPENAI_API_KEY` is the one that matters.
 
 ---
 

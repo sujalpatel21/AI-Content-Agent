@@ -5,9 +5,10 @@ Run the entire content pipeline in one command — from raw scraping to a camera
 
 ## Required Inputs
 All credentials set in `.env`:
-- `APIFY_API_KEY`
 - `OPENAI_API_KEY`
 - `ANTHROPIC_API_KEY`
+
+Agent 01 needs no API key — it pulls from free/public feeds (Google Trends RSS, Reddit RSS, Google News RSS, Hacker News API).
 
 Config filled in:
 - `config/voice_profile.json` — creator tone + past scripts
@@ -66,7 +67,7 @@ This takes ~30 seconds.
 
 | Problem | Fix |
 |---------|-----|
-| Agent 01 fails | Check `APIFY_API_KEY`. Run `python tools/content_scraper.py` alone to debug. |
+| Agent 01 fails | Run `python tools/content_scraper.py` alone to debug — likely a feed being temporarily unreachable, not a credential issue. |
 | Agent 02 filters everything out | Lower `MIN_VIEWS_FILTER` in `.env` |
 | Agent 03 / 04 fail | Check `ANTHROPIC_API_KEY` and `ANTHROPIC_MODEL` in `.env` |
 | Pipeline exits early | Each agent prints its error. Check that agent's workflow doc. |

@@ -227,6 +227,33 @@ def api_output(kind):
     if not f.exists(): return jsonify({"error": "Not found"}), 404
     return jsonify(json.loads(f.read_text(encoding="utf-8")))
 
+@app.route("/api/generate-post", methods=["POST"])
+def api_generate_post():
+    """Webhook for external callers (e.g. Benji) to turn a link/image/video/text
+    into a platform-formatted draft. Does not publish — returns a draft only."""
+    secret = os.getenv("WEBHOOK_SECRET", "")
+    if secret and request.headers.get("X-Webhook-Secret") != secret:
+        return jsonify({"error": "unauthorized"}), 401
+
+    d = request.json or {}
+    source_type = d.get("source_type")
+    source      = d.get("source")
+    platform    = d.get("platform")
+    instruction = d.get("instruction")
+
+    if not source_type or not source or not platform:
+        return jsonify({"error": "source_type, source, and platform are required"}), 400
+
+    from tools.post_generator import generate_post, PLATFORM_SPECS
+    if platform not in PLATFORM_SPECS:
+        return jsonify({"error": f"Unsupported platform '{platform}'. Supported: {list(PLATFORM_SPECS)}"}), 400
+
+    try:
+        result = generate_post(source_type, source, platform, instruction)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route("/api/status")
 def api_status(): return jsonify(pipeline_state)
 
