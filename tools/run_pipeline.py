@@ -83,7 +83,7 @@ def run():
     print(f"⏱️  Agent 03 done in {elapsed(t)}")
 
     if not script_out:
-        print("❌  Script writing failed. Check GEMINI_API_KEY in .env")
+        print("❌  Script writing failed. Check OPENAI_API_KEY in .env")
         sys.exit(1)
 
     # ── Agent 04: Hook Generator ──────────────────────────────
