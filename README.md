@@ -1,19 +1,20 @@
 # AI Content System
 
-A 4-agent AI pipeline built on the **WAT framework** (Workflows → Agents → Tools).  
-Detects real-time trends → validates what's working → writes your script → generates hooks.  
-Total daily run time: **~3 minutes**.
+A 5-agent AI pipeline built on the **WAT framework** (Workflows → Agents → Tools).  
+Detects real-time trends → validates what's working → writes your script → generates hooks — plus an on-demand agent that turns a link/image/video into a platform-ready draft for Benji (the WhatsApp/Telegram assistant) to hand back to you.  
+Total daily run time: **~3 minutes** for the trend pipeline; the post generator runs per-request.
 
 ---
 
-## The 4 Agents
+## The 5 Agents
 
 | Agent | Tool | What it does |
 |-------|------|-------------|
 | **01 — Content Scraper** | `tools/content_scraper.py` | Pulls real-time trends from Google Trends, Reddit, Google News & Hacker News — all free RSS/public feeds, no paid API, no competitor-profile scraping. |
 | **02 — Validation Agent** | `tools/content_validator.py` | Scores posts (views 40%, ER 35%, comments 25%), filters low performers, clusters by topic, ranks what's working. |
-| **03 — Voice Writer** | `tools/voice_writer.py` | Writes your reel script in your exact tone using Claude. Beat 1 → Beat 2 → Beat 3 → CTA. |
+| **03 — Voice Writer** | `tools/voice_writer.py` | Writes your reel script in your exact tone using OpenAI. Beat 1 → Beat 2 → Beat 3 → CTA. |
 | **04 — Hook Generator** | `tools/hook_generator.py` | Generates 5 hook variations (aspirational, pain point, insider, claim, curiosity) with confidence scores. |
+| **05 — Post Generator** | `tools/post_generator.py` | On-demand: takes a link/image/video/text + target platform, returns a draft post in your voice. Exposed via `/api/generate-post` for Benji to call. Never publishes on its own. |
 
 ---
 
